@@ -1,0 +1,75 @@
+import threading
+import tkinter as tk
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+messages = []
+
+# ---------------- Flask Routes ---------------- #
+
+@app.route('/send', methods=['POST'])
+def receive_message():
+    data = request.get_json()
+    msg = data.get("message", "")
+    sender = data.get("sender", "Unknown")
+
+    full_msg = f"{sender}: {msg}"
+    messages.append(full_msg)
+
+    return jsonify({"status": "received"}), 200
+
+
+@app.route('/get', methods=['GET'])
+def get_messages():
+    return jsonify(messages), 200
+
+
+# ---------------- Flask Thread ---------------- #
+
+def run_server():
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+
+
+# ---------------- Tkinter GUI ---------------- #
+
+def send_message():
+    msg = entry.get()
+    if msg:
+        full_msg = f"Pi: {msg}"
+        messages.append(full_msg)
+        entry.delete(0, tk.END)
+        update_chat()
+
+
+def update_chat():
+    chat_box.delete("1.0", tk.END)
+    for msg in messages:
+        chat_box.insert(tk.END, msg + "\n")
+
+
+# GUI setup
+root = tk.Tk()
+root.title("Raspberry Pi Chat")
+root.geometry("400x500")
+
+chat_box = tk.Text(root, height=20)
+chat_box.pack()
+
+entry = tk.Entry(root, width=40)
+entry.pack()
+
+send_btn = tk.Button(root, text="Send", command=send_message)
+send_btn.pack()
+
+# Start Flask in background
+threading.Thread(target=run_server, daemon=True).start()
+
+# Refresh UI every second
+def auto_refresh():
+    update_chat()
+    root.after(1000, auto_refresh)
+
+auto_refresh()
+
+root.mainloop()
