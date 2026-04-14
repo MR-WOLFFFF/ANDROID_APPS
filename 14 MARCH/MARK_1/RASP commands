@@ -9,3 +9,13 @@ ip addr
 inet 192.168.50.2/24
 
 
+mark___2
+
+sudo systemctl enable ssh
+sudo systemctl start ssh
+
+sudo systemctl status ssh
+
+ p2
+
+ping 10.37.68.55
