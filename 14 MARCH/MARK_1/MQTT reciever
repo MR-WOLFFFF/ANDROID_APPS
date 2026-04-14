@@ -1,0 +1,28 @@
+import paho.mqtt.client as mqtt
+
+# MQTT settings (same as sender!)
+BROKER = "broker.hivemq.com"
+PORT = 1883
+TOPIC = "myhome/lora/message"
+
+# When message is received
+def on_message(client, userdata, msg):
+    message = msg.payload.decode()
+    print(f"📩 Received message: {message}")
+
+# Create client
+client = mqtt.Client()
+
+# Attach callback
+client.on_message = on_message
+
+# Connect to broker
+client.connect(BROKER, PORT, 60)
+
+# Subscribe to topic
+client.subscribe(TOPIC)
+
+print("✅ Waiting for messages...")
+
+# Keep listening forever
+client.loop_forever()
