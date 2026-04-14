@@ -1,1 +1,9 @@
 sudo ip addr add 192.168.50.2/24 dev eth0
+
+sudo ip link set eth0 up
+
+verification 
+
+ip addr
+
+inet 192.168.50.2/24
