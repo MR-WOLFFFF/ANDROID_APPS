@@ -7,7 +7,10 @@ measures round-trip time (RTT) for each message.
 Usage example:
     python computer2_client.py --server-ip 192.168.1.10 --port 4433
 """
-
+# Install DTLS library
+%pip install --upgrade pip
+%pip install python-mbedtls
+    
 from __future__ import annotations
 
 import argparse
