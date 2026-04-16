@@ -1,0 +1,2 @@
+pip install python-mbedtls
+python computer1_server.py
