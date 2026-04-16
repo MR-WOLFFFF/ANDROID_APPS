@@ -8,7 +8,11 @@ simplest way to demonstrate encrypted UDP without generating certificates.
 Usage example:
     python computer1_server.py --bind 0.0.0.0 --port 4433
 """
+# Install DTLS library
+%pip install --upgrade pip
+%pip install python-mbedtls
 
+    
 from __future__ import annotations
 
 import argparse
