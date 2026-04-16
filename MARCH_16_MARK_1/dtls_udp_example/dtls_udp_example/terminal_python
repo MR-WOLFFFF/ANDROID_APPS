@@ -1,0 +1,3 @@
+cd "D:\1.Internship\16_MARCH\MARCH_16_MARK_1\dtls_udp_example"
+pip install python-mbedtls
+python computer1_server.py
