@@ -1,0 +1,43 @@
+
+1. run this files 
+
+sudo apt update
+sudo apt install -y python3-pip python3-tk can-utils
+python3 -m pip install --break-system-packages python-can
+
+
+2. OPEN config
+
+sudo nano /boot/firmware/config.txt
+
+
+
+3. add this lines at the end 
+
+dtparam=spi=on
+dtoverlay=i2c0
+dtoverlay=spi1-3cs
+dtoverlay=mcp2515,spi1-1,oscillator=16000000,interrupt=22
+dtoverlay=mcp2515,spi1-2,oscillator=16000000,interrupt=13
+
+
+4. save and reboot. 
+
+sudo reboot
+
+5. after reboot
+
+dmesg | grep spi1
+
+
+
+6. Bring CAN up. Replace 1000000 with your real bus bitrate if needed:
+
+sudo ip link set can0 down 2>/dev/null
+sudo ip link set can1 down 2>/dev/null
+
+sudo ip link set can0 up type can bitrate 1000000
+sudo ip link set can1 up type can bitrate 1000000
+
+sudo ifconfig can0 txqueuelen 65536
+sudo ifconfig can1 txqueuelen 65536
