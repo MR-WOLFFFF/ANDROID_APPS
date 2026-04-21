@@ -1,0 +1,62 @@
+
+1. update the rasp 
+sudo apt update
+sudo apt upgrade -y
+
+2. install the dependencies 
+sudo apt install -y python3 python3-pip python3-tk nano can-utils
+>>>>>> install 
+pip3 install python-can --break-system-packages
+
+3. check python is working 
+python3 --version
+
+4. check tinkinter is working 
+python3 -m tkinter
+
+5. make sure our CAN exist. 
+ip link show
+>>>>>> we can see like can0
+
+>>>>>##### if we cant see then 
+sudo ip link set can0 down 2>/dev/null
+sudo ip link set can0 up type can bitrate 500000
+
+>>>>> check it again. 
+ip link show can0
+
+
+6. creating python file 
+nano can_gui.py
+
+
+7. copy the python file haha
+  which is i uploaded in the other tab "pythonfile"
+
+8. saving the python file 
+Press Ctrl + O
+Press Enter
+Press Ctrl + X
+
+9. check the file saved 
+ls
+>>>>>> we might see like "can_gui.py"
+
+
+10. run the file
+python3 can_gui.py
+
+11. for force stop the command 
+press Ctrl + C
+
+
+12. if we want to edit again 
+nano can_gui.py
+
+13. after editing dont forget to save. 
+Ctrl + O
+Enter
+Ctrl + X
+
+
+
