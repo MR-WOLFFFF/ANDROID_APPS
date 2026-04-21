@@ -1,0 +1,78 @@
+1. configuration oppening 
+
+sudo nano /boot/firmware/config.txt
+
+
+2. bottom should be looks like 
+force_eeprom_read=0
+dtparam=spi=on
+dtoverlay=spi1-3cs
+dtoverlay=mcp2515,spi1-1,oscillator=16000000,interrupt=22
+dtoverlay=mcp2515,spi1-2,oscillator=16000000,interrupt=13
+
+>> save it 
+Ctrl + O
+Enter
+Ctrl + X
+
+3. reboot
+sudo reboot
+
+
+>>>>>>afyer rebooting checking the system 
+
+4. check up 
+dmesg | grep -Ei "mcp|spi1|can"
+ip link show
+
+
+>>>>>>> expected output would be like this 
+mcp251x spi1.2 can0: MCP2515 successfully initialized.
+mcp251x spi1.1 can1: MCP2515 successfully initialized.
+
+
+
+
+
+5. bring the both can interface on 
+sudo ip link set can0 up type can bitrate 1000000
+sudo ip link set can1 up type can bitrate 1000000
+sudo ifconfig can0 txqueuelen 65536
+sudo ifconfig can1 txqueuelen 65536
+
+
+
+6. quick testing on the 2 terminal 
+
+>>> terminal 1 
+candump can0
+
+>>> terminal 2
+cansend can1 000#11223344
+
+
+
+
+
+total terminal setup would be. 
+1. 
+sudo nano /boot/firmware/config.txt
+2. 
+force_eeprom_read=0
+dtparam=spi=on
+dtoverlay=spi1-3cs
+dtoverlay=mcp2515,spi1-1,oscillator=16000000,interrupt=22
+dtoverlay=mcp2515,spi1-2,oscillator=16000000,interrupt=13
+3. 
+sudo reboot
+4. 
+dmesg | grep -Ei "mcp|spi1|can"
+ip link show
+sudo ip link set can0 up type can bitrate 1000000
+sudo ip link set can1 up type can bitrate 1000000
+sudo ifconfig can0 txqueuelen 65536
+sudo ifconfig can1 txqueuelen 65536
+
+5. sending the secound output would be 
+dmesg | grep -Ei "mcp|spi1|can"
+ip link show
