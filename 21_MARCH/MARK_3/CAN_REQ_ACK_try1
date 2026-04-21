@@ -1,0 +1,121 @@
+import time
+import threading
+import tkinter as tk
+from tkinter import scrolledtext
+import can
+
+# =========================
+# CHANGE THESE IF NEEDED
+# =========================
+CAN_CHANNEL = "can0"
+
+REQ_ID = 0x001
+REQ_DATA = bytes([0x00, 0x02, 0x00])
+
+ACK_ID = 0x110
+ACK_FIRST_BYTE = 0x40
+
+TIMEOUT_S = 0.5
+# =========================
+
+class CanGui:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("RPi CAN Request / Ack")
+
+        self.bus = None
+        self._open_bus()
+
+        self.status_var = tk.StringVar(value="Ready")
+        self.last_rx_var = tk.StringVar(value="Last RX: none")
+
+        tk.Label(root, text="Simple CAN GUI", font=("Arial", 14, "bold")).pack(pady=8)
+
+        tk.Label(root, textvariable=self.status_var, font=("Arial", 12)).pack(pady=4)
+        tk.Label(root, textvariable=self.last_rx_var, font=("Arial", 10)).pack(pady=4)
+
+        self.send_btn = tk.Button(
+            root,
+            text="Send Request",
+            width=20,
+            height=2,
+            command=self.start_send_thread
+        )
+        self.send_btn.pack(pady=10)
+
+        self.log_box = scrolledtext.ScrolledText(root, width=80, height=18)
+        self.log_box.pack(padx=10, pady=10)
+
+        self.log(f"CAN channel opened: {CAN_CHANNEL}")
+        self.log(f"REQ  ID=0x{REQ_ID:03X} DATA={REQ_DATA.hex(' ').upper()}")
+        self.log(f"ACK  ID=0x{ACK_ID:03X} FIRST_BYTE=0x{ACK_FIRST_BYTE:02X}")
+
+    def _open_bus(self):
+        self.bus = can.interface.Bus(channel=CAN_CHANNEL, interface="socketcan")
+
+    def log(self, text):
+        ts = time.strftime("%H:%M:%S")
+        self.log_box.insert(tk.END, f"[{ts}] {text}\n")
+        self.log_box.see(tk.END)
+
+    def set_status(self, text):
+        self.root.after(0, lambda: self.status_var.set(text))
+
+    def set_last_rx(self, text):
+        self.root.after(0, lambda: self.last_rx_var.set(text))
+
+    def set_button_state(self, state):
+        self.root.after(0, lambda: self.send_btn.config(state=state))
+
+    def start_send_thread(self):
+        threading.Thread(target=self.send_and_wait_ack, daemon=True).start()
+
+    def send_and_wait_ack(self):
+        self.set_button_state("disabled")
+        self.set_status("Sending request...")
+
+        try:
+            msg = can.Message(
+                arbitration_id=REQ_ID,
+                data=REQ_DATA,
+                is_extended_id=False
+            )
+
+            self.bus.send(msg)
+            self.log(f"TX -> ID=0x{msg.arbitration_id:03X} DATA={msg.data.hex(' ').upper()}")
+
+            start = time.time()
+            ack_ok = False
+
+            while time.time() - start < TIMEOUT_S:
+                rx = self.bus.recv(timeout=0.05)
+                if rx is None:
+                    continue
+
+                rx_data = rx.data.hex(' ').upper()
+                self.log(f"RX <- ID=0x{rx.arbitration_id:03X} DATA={rx_data}")
+                self.set_last_rx(f"Last RX: ID=0x{rx.arbitration_id:03X} DATA={rx_data}")
+
+                if rx.arbitration_id == ACK_ID and len(rx.data) > 0 and rx.data[0] == ACK_FIRST_BYTE:
+                    elapsed_ms = (time.time() - start) * 1000.0
+                    self.set_status(f"ACK received ({elapsed_ms:.1f} ms)")
+                    self.log(f"ACK OK in {elapsed_ms:.1f} ms")
+                    ack_ok = True
+                    break
+
+            if not ack_ok:
+                self.set_status("No ACK received")
+                self.log("Timeout: no matching ACK")
+
+        except Exception as e:
+            self.set_status("Error")
+            self.log(f"ERROR: {e}")
+
+        finally:
+            self.set_button_state("normal")
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = CanGui(root)
+    root.mainloop()
