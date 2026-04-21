@@ -1,0 +1,29 @@
+1. checking the configuration. 
+grep -E "dtparam=spi=on|spi1-3cs|mcp2515" /boot/firmware/config.txt
+
+>>>>>>we need to see thse txts 
+"""" 
+dtparam=spi=on
+dtoverlay=spi1-3cs
+dtoverlay=mcp2515,spi1-1,oscillator=16000000,interrupt=22
+dtoverlay=mcp2515,spi1-2,oscillator=16000000,interrupt=13
+""""
+
+2. check afer reboot. 
+dmesg | grep -Ei "mcp|spi|can"
+
+>>>> then 
+ip link show
+
+
+
+3. mini check 
+
+>>> 1st one 
+grep -E "dtparam=spi=on|spi1-3cs|mcp2515" /boot/firmware/config.txt
+
+>>>>2nd one 
+ls /boot/firmware
+
+>>>>3rd one
+vcgencmd get_config int | grep spi
