@@ -1,1 +1,46 @@
+1. Write on the terminal 
 
+nano can_gui.py
+
+2. Paste the code
+
+Copy your full Python code and paste it into nano.
+
+In Raspberry Pi terminal:
+
+paste with right click
+or
+press Shift + Ctrl + V
+4. Save the file
+
+Press:
+Ctrl + O → save
+then press Enter
+then Ctrl + X → exit
+
+So the full order is:
+
+Ctrl + O → Enter → Ctrl + X
+
+
+5. Install required packages
+
+sudo apt update
+sudo apt install -y python3-pip python3-tk
+pip3 install python-can --break-system-packages
+
+
+6. Run the program
+
+python3 can_gui.py
+
+7. If the GUI does not open
+
+It usually means:
+
+tkinter is not installed
+or you are using terminal without desktop session
+
+Then check with:
+
+echo $DISPLAY
