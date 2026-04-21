@@ -1,0 +1,50 @@
+how to configure CAN 
+
+1. first of all power off the pi
+sudo poweroff
+
+2. do the configuration 
+sudo nano /boot/firmware/config.txt
+
+3. add the section in the end 
+dtparam=spi=on
+dtoverlay=i2c0
+dtoverlay=spi1-3cs
+dtoverlay=mcp2515,spi1-1,oscillator=16000000,interrupt=22
+dtoverlay=mcp2515,spi1-2,oscillator=16000000,interrupt=13
+
+>>>>>>>>> in order to save the session follow the respected command 
+
+control + o 
+enter 
+control + x
+
+4. reboot 
+sudo reboot
+
+5. check the HAT device detected
+dmesg | grep spi1
+
+6. then write this to detect. 
+ip link show
+
+>>>>> it will look lik can0 and can1
+
+7. bring CAN UP
+sudo ip link set can0 up type can bitrate 1000000
+sudo ip link set can1 up type can bitrate 1000000
+sudo ifconfig can0 txqueuelen 65536
+sudo ifconfig can1 txqueuelen 65536
+
+8. check the ip links
+
+ip link show can0
+ip link show can1
+
+9. quick test on 2 terminal 
+
+>>>> terminal 1 
+candump can0
+
+>>>> on terminal 2 
+cansend can1 000#11223344
