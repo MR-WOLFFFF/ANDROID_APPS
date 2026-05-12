@@ -1,0 +1,6 @@
+sudo apt update
+sudo apt install -y python3-tk can-utils
+
+
+nano page1a_demo.py
+
