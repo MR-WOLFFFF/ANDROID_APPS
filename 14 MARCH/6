@@ -1,0 +1,157 @@
+import tkinter as tk
+from tkinter import ttk
+
+from page1a_demo import setup_can
+from page1b_demo import toggle_asr, toggle_esp, toggle_hadc
+
+
+class ControlHMI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("CAN CONTROL HMI - DEMO")
+        self.root.geometry("620x420")
+        self.root.resizable(False, False)
+
+        self.leds = {}
+
+        self.build_ui()
+
+        # Setup CAN automatically when HMI starts
+        self.reset_can()
+
+    def build_ui(self):
+        title = tk.Label(
+            self.root,
+            text="CAN Control Signal Interface",
+            font=("Arial", 20, "bold")
+        )
+        title.pack(pady=15)
+
+        subtitle = tk.Label(
+            self.root,
+            text="Push button sends one CAN command. LED shows last command state.",
+            font=("Arial", 11)
+        )
+        subtitle.pack(pady=5)
+
+        main_frame = ttk.Frame(self.root, padding=20)
+        main_frame.pack(fill="both", expand=True)
+
+        self.create_control_row(
+            parent=main_frame,
+            row=0,
+            name="ASR",
+            description="ASR command: 001#000200",
+            command=self.on_asr_pressed
+        )
+
+        self.create_control_row(
+            parent=main_frame,
+            row=1,
+            name="ESP",
+            description="ESP command: 001#000100",
+            command=self.on_esp_pressed
+        )
+
+        self.create_control_row(
+            parent=main_frame,
+            row=2,
+            name="Descent Control",
+            description="HADC command: 001#010000 + 100#20",
+            command=self.on_hadc_pressed
+        )
+
+        reset_button = tk.Button(
+            main_frame,
+            text="RESET CAN",
+            font=("Arial", 12, "bold"),
+            width=18,
+            height=2,
+            command=self.reset_can
+        )
+        reset_button.grid(row=3, column=0, pady=25, sticky="w")
+
+        self.status_label = tk.Label(
+            self.root,
+            text="Status: starting...",
+            font=("Arial", 11),
+            fg="blue"
+        )
+        self.status_label.pack(pady=10)
+
+    def create_control_row(self, parent, row, name, description, command):
+        button = tk.Button(
+            parent,
+            text=name,
+            font=("Arial", 13, "bold"),
+            width=18,
+            height=2,
+            command=command
+        )
+        button.grid(row=row, column=0, padx=20, pady=12, sticky="w")
+
+        canvas = tk.Canvas(parent, width=45, height=45, highlightthickness=0)
+        canvas.grid(row=row, column=1, padx=10)
+
+        led = canvas.create_oval(8, 8, 37, 37, fill="red", outline="black")
+        self.leds[name] = (canvas, led)
+
+        label = tk.Label(
+            parent,
+            text=description,
+            font=("Arial", 10),
+            anchor="w"
+        )
+        label.grid(row=row, column=2, padx=20, sticky="w")
+
+    def set_led(self, name, state):
+        canvas, led = self.leds[name]
+        color = "green" if state else "red"
+        canvas.itemconfig(led, fill=color)
+
+    def set_status(self, text, ok=True):
+        self.status_label.config(
+            text=f"Status: {text}",
+            fg="green" if ok else "red"
+        )
+
+    def reset_can(self):
+        success, message = setup_can()
+        self.set_status(message, success)
+
+    def on_asr_pressed(self):
+        state, success, message = toggle_asr()
+        if success:
+            self.set_led("ASR", state)
+            self.set_status(f"ASR {'ON' if state else 'OFF'} - {message}", True)
+        else:
+            self.set_status(f"ASR error - {message}", False)
+
+    def on_esp_pressed(self):
+        state, success, message = toggle_esp()
+        if success:
+            self.set_led("ESP", state)
+            self.set_status(f"ESP {'ON' if state else 'OFF'} - {message}", True)
+        else:
+            self.set_status(f"ESP error - {message}", False)
+
+    def on_hadc_pressed(self):
+        state, success, message = toggle_hadc()
+        if success:
+            self.set_led("Descent Control", state)
+            self.set_status(
+                f"Descent Control {'ON' if state else 'OFF'} - {message}",
+                True
+            )
+        else:
+            self.set_status(f"Descent Control error - {message}", False)
+
+
+def main():
+    root = tk.Tk()
+    app = ControlHMI(root)
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
