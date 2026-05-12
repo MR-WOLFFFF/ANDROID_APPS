@@ -1,8 +1,9 @@
 import subprocess
+from page1a_demo import setup_can
 
 CAN_IFACE = "can1"
 
-# Internal states
+# Internal button states
 asr_state = False
 esp_state = False
 hadc_state = False
@@ -30,19 +31,22 @@ def build_emission_bmf1_frame():
     """
     ID 001, DLC 3
 
-    HADC ON  = 001#010000
-    ESP ON   = 001#000100
-    ASR ON   = 001#000200
+    HADC ON = 001#010000
+    ESP ON  = 001#000100
+    ASR ON  = 001#000200
 
-    Combined logic:
+    Combined example:
+    ESP + ASR = 001#000300
     HADC + ESP + ASR = 001#010300
     """
 
     byte0 = 0x01 if hadc_state else 0x00
 
     byte1 = 0x00
+
     if esp_state:
         byte1 |= 0x01
+
     if asr_state:
         byte1 |= 0x02
 
@@ -51,17 +55,28 @@ def build_emission_bmf1_frame():
     return f"001#{byte0:02X}{byte1:02X}{byte2:02X}"
 
 
-def send_current_state():
+def reset_then_send_main_state():
+    """
+    Every button press:
+    1. Reset/configure CAN1
+    2. Send current control signal
+    """
+
+    success, message = setup_can()
+
+    if not success:
+        return False, f"CAN setup failed: {message}"
+
     frame = build_emission_bmf1_frame()
-    success, message = run_cansend(frame)
-    return success, message
+    return run_cansend(frame)
 
 
 def toggle_asr():
     global asr_state
 
     asr_state = not asr_state
-    success, message = send_current_state()
+
+    success, message = reset_then_send_main_state()
 
     if not success:
         asr_state = not asr_state
@@ -73,7 +88,8 @@ def toggle_esp():
     global esp_state
 
     esp_state = not esp_state
-    success, message = send_current_state()
+
+    success, message = reset_then_send_main_state()
 
     if not success:
         esp_state = not esp_state
@@ -86,20 +102,20 @@ def toggle_hadc():
 
     hadc_state = not hadc_state
 
-    success, message = send_current_state()
+    success, message = reset_then_send_main_state()
 
-    if success:
-        if hadc_state:
-            success2, message2 = run_cansend("100#20")
-        else:
-            success2, message2 = run_cansend("100#00")
-
-        if not success2:
-            hadc_state = not hadc_state
-            return hadc_state, False, message2
-
-    else:
+    if not success:
         hadc_state = not hadc_state
         return hadc_state, False, message
+
+    # HADC also needs status frame 100
+    if hadc_state:
+        success2, message2 = run_cansend("100#20")
+    else:
+        success2, message2 = run_cansend("100#00")
+
+    if not success2:
+        hadc_state = not hadc_state
+        return hadc_state, False, message2
 
     return hadc_state, True, message
