@@ -1,0 +1,13 @@
+CTRL + O → ENTER → CTRL + X
+
+
+ls
+
+
+
+sudo -E python3 pagemain_demo.py
+
+if its not running then run this command 
+
+
+sudo python3 pagemain_demo.py
